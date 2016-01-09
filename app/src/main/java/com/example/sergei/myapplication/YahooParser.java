@@ -8,14 +8,17 @@ import android.os.AsyncTask;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Created by Sergei on 08.01.2016.
@@ -66,8 +69,9 @@ public class YahooParser {
         // web page content.
         int len = 500;
         String temperature=null;
+        //getWOEIDByCityName;
+        myurl = "http://weather.yahooapis.com/forecastrss?w="+getWOEIDByCityName(myurl)+"&u=c";
         try {
-            myurl = "http://weather.yahooapis.com/forecastrss?w=12718298&u=c";
             URL url = new URL(myurl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setReadTimeout(10000 /* milliseconds */);
@@ -130,12 +134,69 @@ public class YahooParser {
 //        return netInfo != null && netInfo.isConnectedOrConnecting();
 //    }
 
-    public static void main(String args[]){
+/*    public static void main(String args[]){
         YahooParser parser = new YahooParser();
         try {
             parser.downloadUrl("dad");
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }*/
+
+    private String getFullUrl(String cityName){
+        String yahooPlaceApisBase = "http://query.yahooapis.com/v1/public/yql?q=select*from%20geo.places%20where%20text=";
+        String yahooapisFormat = "&format=xml";
+        String yahooPlaceAPIsQuery;
+        yahooPlaceAPIsQuery = yahooPlaceApisBase
+                + "%22" + cityName + "%22"
+                + yahooapisFormat;
+        return yahooPlaceAPIsQuery;
     }
+
+    public String getWOEIDByCityName(String cityName) throws IOException {
+        String fullUrl = getFullUrl(cityName);
+        String rst=null;
+        URL url = null;
+        Document docs1=null;
+        InputStream is=null;
+        try {
+            url = new URL(fullUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setReadTimeout(10000 /* milliseconds */);
+            conn.setConnectTimeout(15000 /* milliseconds */);
+            conn.setRequestMethod("GET");
+            conn.setDoInput(true);
+            // Starts the query
+            conn.connect();
+            int response = conn.getResponseCode();
+            //Log.d(DEBUG_TAG, "The response is: " + response);
+            is = conn.getInputStream();
+
+            //horrible
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = null;
+            builder = factory.newDocumentBuilder();
+            docs1 = builder.parse(is);
+        /*} catch (MalformedURLException e) {
+            e.printStackTrace();*/
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+
+        NodeList nodq = docs1.getElementsByTagName("locality1");
+        if (nodq.getLength() > 0) {
+            Element nodo = (Element) nodq.item(0);
+            rst =  nodo.getAttribute("woeid");
+        }
+        return rst;
+
+    }
+
 }
