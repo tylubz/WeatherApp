@@ -156,8 +156,8 @@ public class YahooParser {
 
     public String getWOEIDByCityName(String cityName) throws IOException {
         String fullUrl = getFullUrl(cityName);
-        String rst=null;
-        URL url = null;
+        String rst = null;
+        URL url;
         Document docs1=null;
         InputStream is=null;
         try {
